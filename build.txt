@@ -1,0 +1,3 @@
+displayName = Wires on Map
+author = MysticMia
+version = 0.1
