@@ -2,7 +2,7 @@
 
 Items: {
 	wiresonmapSword: {
-		DisplayName: "wiresonmap Sword"
+		DisplayName: wiresonmap Sword
 		Tooltip:
 			'''
 			Template of an item
