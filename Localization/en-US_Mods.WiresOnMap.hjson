@@ -3,7 +3,11 @@
 Configs: {
 	WireConfig: {
 		DisplayName: Wire Config
-		Headers.MainConfiguration: Main Configuration Header
+
+		Headers: {
+			MainConfiguration: Main Configuration
+			MapWireColors: Map Wire Colors
+		}
 
 		WiresOnMapEnabled: {
 			Label: Wires On Map Enabled
@@ -23,6 +27,26 @@ Configs: {
 		HideWiresInFogOfWar: {
 			Label: Hide Wires In Fog Of War
 			Tooltip: Whether to show wires only if they are on a discovered tile.
+		}
+
+		RedWireColor: {
+			Label: Red Wire Color
+			Tooltip: The color of Red wires on the map.
+		}
+
+		BlueWireColor: {
+			Label: Blue Wire Color
+			Tooltip: The color of Blue wires on the map.
+		}
+
+		GreenWireColor: {
+			Label: Green Wire Color
+			Tooltip: The color of Green wires on the map.
+		}
+
+		YellowWireColor: {
+			Label: Yellow Wire Color
+			Tooltip: The color of Yellow wires on the map.
 		}
 	}
 }

@@ -33,10 +33,10 @@ public class WireMap : ModMapLayer
     {
         return wire switch
         {
-            WireByte.RedWire => Color.Red,
-            WireByte.BlueWire => Color.Blue,
-            WireByte.GreenWire => Color.Green,
-            WireByte.YellowWire => Color.Yellow,
+            WireByte.RedWire => Instance.RedWireColor, //Color.Red,
+            WireByte.BlueWire => Instance.BlueWireColor, //Color.Blue,
+            WireByte.GreenWire => Instance.GreenWireColor, //Color.Green,
+            WireByte.YellowWire => Instance.YellowWireColor, //Color.Yellow,
             _ => Color.White
         };
     }
@@ -316,20 +316,6 @@ public class WireMap : ModMapLayer
 
     private static bool IsWireEnabled(WireByte wire)
     {
-
-        // List<BuilderToggle> toggles = BuilderToggleLoader.ActiveBuilderTogglesList(); // Method is internal
-        // List<BuilderToggle> toggles = Type.GetType("BuilderToggleLoader")
-        //     .GetMethod("ActiveBuilderTogglesList")
-        //     .Invoke(null, null) as List<BuilderToggle>;
-        // return wire switch
-        // {
-        //     WireByte.RedWire => toggles.Contains(BuilderToggle.RedWireVisibility),
-        //     WireByte.BlueWire => toggles.Contains(BuilderToggle.BlueWireVisibility),
-        //     WireByte.GreenWire => toggles.Contains(BuilderToggle.GreenWireVisibility),
-        //     WireByte.YellowWire => toggles.Contains(BuilderToggle.YellowWireVisibility),
-        //     _ => false
-        // };
-
         return wire switch
         {
             // builderAccStatus[x] returns a WireVisibilityBuilderToggle which is a VanillaBuilderToggle.
@@ -353,25 +339,6 @@ public class WireMap : ModMapLayer
 
         if (Instance.DebugMapDrawMessages)
             WireChat.LogToPlayer("Drawing Map", Color.Green);
-
-        if (false)
-        {
-            // for (int x = 0; x < Main.tile.Width; x++)
-            // {
-            //     for (int y = 0; y < Main.tile.Height; y++)
-            //     {
-            //         WireByte wire = wireMap[x, y];
-            //         if (wire == 0) continue;
-            //         Color color;
-            //         if (wire.HasFlag(WireByte.RedWire)) color = Color.Red;
-            //         else if (wire.HasFlag(WireByte.BlueWire)) color = Color.Blue;
-            //         else if (wire.HasFlag(WireByte.GreenWire)) color = Color.Green;
-            //         else if (wire.HasFlag(WireByte.YellowWire)) color = Color.Yellow;
-            //         else color = Color.White;
-            //         CustomDraw(context, new Vector2(x, y), new Vector2(1, 1), color, Alignment.TopLeft);
-            //     }
-            // }
-        }
 
         foreach (WireByte wire in WireKeys)
         {
