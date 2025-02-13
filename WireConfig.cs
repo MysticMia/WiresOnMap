@@ -1,6 +1,8 @@
 ﻿using System.ComponentModel;
 using Microsoft.Xna.Framework;
+using Terraria.ModLoader;
 using Terraria.ModLoader.Config;
+using WiresOnMap.Hooks;
 
 namespace WiresOnMap;
 
@@ -12,14 +14,18 @@ public class WireConfig : ModConfig
     #region Functions
     public override void OnChanged()
     {
-        WireMap.UpdateWireMap();
+        WireMapLayer mapLayer = ModContent.GetInstance<WireMapLayer>();
+        if (mapLayer != null)
+            mapLayer.Visible = Instance.WiresOnMapEnabled;
+
+        WireData.UpdateWireMap();
     }
     #endregion
 
     #region Main config
     [Header("MainConfiguration")]
     [DefaultValue(true)] public bool WiresOnMapEnabled;
-    [DefaultValue(true)] public bool HideWiresInFogOfWar;
+    [DefaultValue(false)] public bool HideWiresInFogOfWar;
     [DefaultValue(false)] public bool DebugMapDrawMessages;
     [DefaultValue(false)] public bool DebugWireUpdateMessages;
     #endregion

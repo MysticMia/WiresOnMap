@@ -6,6 +6,6 @@ public class WirePlayer : ModPlayer
 {
     public override void OnEnterWorld()
     {
-        WireMap.UpdateWireMap();
+        WireData.UpdateWireMap();
     }
 }

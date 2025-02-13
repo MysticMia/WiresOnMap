@@ -10,7 +10,7 @@ public class WireGlobalItem : GlobalItem
     {
         if (item.type == ItemID.WireKite || // Grand Design? what a name.
             item.type == ItemID.Wire)
-            WireMap.UpdateWireMap();
+            WireData.UpdateWireMap();
         return base.UseItem(item, player);
     }
 }
