@@ -16,4 +16,3 @@ public enum WireByte : byte
     GreenWire  = 1 << 2,
     YellowWire = 1 << 3
 }
-

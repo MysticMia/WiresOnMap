@@ -6,7 +6,7 @@ public class WireSystem : ModSystem
 {
     public override void OnWorldLoad()
     {
-        WireOverwrite.UpdateWireMap();
+        WireMap.UpdateWireMap();
         base.OnWorldLoad();
     }
 }
