@@ -4,9 +4,17 @@ namespace WiresOnMap;
 
 public class WireSystem : ModSystem
 {
-    public override void OnWorldLoad()
-    {
-        WireData.UpdateWireMap();
-        base.OnWorldLoad();
-    }
+    // public static bool WorldLoaded;
+    //
+    // public override void OnWorldLoad()
+    // {
+    //     WorldLoaded = true;
+    //     WireData.UpdateWireMap("ModSystem.OnWorldLoad");
+    //     base.OnWorldLoad();
+    // }
+    //
+    // public override void OnWorldUnload()
+    // {
+    //     WorldLoaded = false;
+    // }
 }

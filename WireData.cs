@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using Terraria;
+using Terraria.ID;
 using Terraria.ModLoader;
 using WiresOnMap.Hooks;
 using static WiresOnMap.WireConfig;
@@ -15,21 +16,37 @@ public static class WireData
     public static Dictionary<WireByte, List<((int, int),int)>> HorizontalLines;
     public static Dictionary<WireByte, List<((int, int),int)>> VerticalLines;
     public static Dictionary<WireByte, List<(int, int)>> SinglePoints;
+    public static List<(int, int)> Teleporters;
     public static bool Initialized;
     private static DateTime _updateTime;
     private static bool _updateBusy;
     private const int YieldThreshold = 100_000;
 
-    public static readonly WireByte[] WireKeys = Enum.GetValues(typeof(WireByte)).Cast<WireByte>().ToArray();
+    public static readonly WireByte[] WireKeys = [
+        WireByte.RedWire,
+        WireByte.BlueWire,
+        WireByte.GreenWire,
+        WireByte.YellowWire,
+        WireByte.RedWire | WireByte.WireHidden,
+        WireByte.BlueWire | WireByte.WireHidden,
+        WireByte.GreenWire | WireByte.WireHidden,
+        WireByte.YellowWire | WireByte.WireHidden
+    ];
+
+    public const WireByte WireBits = WireByte.RedWire | WireByte.BlueWire | WireByte.GreenWire | WireByte.YellowWire;
 
     private static int GetWireByteIndex(WireByte wire)
     {
-        return wire switch
+        return (wire & ~WireByte.Teleporter) switch
         {
-            WireByte.RedWire => 0,
-            WireByte.BlueWire => 1,
-            WireByte.GreenWire => 2,
-            WireByte.YellowWire => 3,
+            WireByte.RedWire    => 0,                           // 0b0000_0001
+            WireByte.BlueWire   => 1,                           // 0b0000_0010
+            WireByte.GreenWire  => 2,                           // 0b0000_0100
+            WireByte.YellowWire => 3,                           // 0b0000_1000
+            WireByte.RedWire | WireByte.WireHidden    => 4,     // 0b0001_0001
+            WireByte.BlueWire | WireByte.WireHidden   => 5,     // 0b0001_0010
+            WireByte.GreenWire | WireByte.WireHidden  => 6,     // 0b0001_0100
+            WireByte.YellowWire | WireByte.WireHidden => 7,     // 0b0001_1000
             _ => throw new ArgumentOutOfRangeException(nameof(wire), wire, null)
         };
     }
@@ -41,14 +58,16 @@ public static class WireData
         lineList.Add((point, lineLength));
         for (int d = 0; d < lineLength; d++)
             if (direction == Direction.Horizontal)
-                wireMap[point.Item1 + d, point.Item2] &= ~wire;
+                wireMap[point.Item1 + d, point.Item2] &= ~(wire & WireBits);
             else if (direction == Direction.Vertical)
-                wireMap[point.Item1, point.Item2 + d] &= ~wire;
+                wireMap[point.Item1, point.Item2 + d] &= ~(wire & WireBits);
     }
 
-    private static Dictionary<WireByte, List<(int,int)>> UpdateSingles(WireByte[,] wireMap)
+    private static (Dictionary<WireByte, List<(int,int)>>, List<(int, int)>) UpdateSingles(WireByte[,] wireMap)
     {
         Dictionary<WireByte, List<(int, int)>> singlePoints = new();
+        List<(int, int)> teleporters = new();
+
         foreach (WireByte wire in WireKeys)
             singlePoints[wire] = new List<(int, int)>();
 
@@ -56,18 +75,33 @@ public static class WireData
         {
             for (int y = 0; y < Main.tile.Height; y++)
             {
-                if (wireMap[x, y] == 0) continue;
+                if (wireMap[x, y].HasFlag(WireByte.Teleporter))
+                    teleporters.Add((x, y));
+
+                if ((wireMap[x, y] & WireBits) == 0) continue;
                 foreach (WireByte wire in WireKeys)
-                    if (wireMap[x, y].HasFlag(wire))
+                    if ((wireMap[x,y] & WireBits).HasFlag(wire & WireBits) && // tile contains wire color
+                        (wireMap[x,y] & WireByte.WireHidden) == (wire & WireByte.WireHidden)
+                        // TileHasWireType(wireMap[x,y], wire)
+                        // // Copy-pasting the function's code, because the compiler can optimize it much better that way.
+                       )
+                    {
                         singlePoints[wire].Add((x, y));
+                    }
             }
         }
 
-        return singlePoints;
+        return (singlePoints, teleporters);
+    }
+
+    private static bool TileHasWireType(WireByte tile, WireByte wire)
+    {
+        return (tile & WireBits).HasFlag(wire & WireBits) && // tile contains wire color
+               (tile & WireByte.WireHidden) == (wire & WireByte.WireHidden); // tile's hidden type matches the wire's
     }
 
     private static async Task<(Dictionary<WireByte, List<((int, int), int)>>, Dictionary<WireByte, List<((int, int), int)>>,
-        Dictionary<WireByte, List<(int, int)>>)> CompressWireMap(WireByte[,] wireMap)
+        Dictionary<WireByte, List<(int, int)>>, List<(int, int)>)> CompressWireMap(WireByte[,] wireMap)
     {
         Dictionary<WireByte, List<((int, int), int)>> horizontalLines = new();
         Dictionary<WireByte, List<((int, int), int)>> verticalLines = new();
@@ -97,7 +131,12 @@ public static class WireData
                 foreach (WireByte wire in WireKeys)
                 {
                     int wireIndex = GetWireByteIndex(wire);
-                    if (wireMap[x, y].HasFlag(wire))
+
+                    if ((wireMap[x,y] & WireBits).HasFlag(wire & WireBits) && // tile contains wire color
+                        (wireMap[x,y] & WireByte.WireHidden) == (wire & WireByte.WireHidden)
+                        // TileHasWireType(wireMap[x,y], wire)
+                        // // Copy-pasting the function's code, because the compiler can optimize it much better that way.
+                        )
                     {
                         if (wireInLine[wireIndex]) continue;
                         wireInLine[wireIndex] = true;
@@ -144,7 +183,11 @@ public static class WireData
                 foreach (WireByte wire in WireKeys)
                 {
                     int wireIndex = GetWireByteIndex(wire);
-                    if (wireMap[x, y].HasFlag(wire))
+                    if ((wireMap[x,y] & WireBits).HasFlag(wire & WireBits) && // tile contains wire color
+                        (wireMap[x,y] & WireByte.WireHidden) == (wire & WireByte.WireHidden)
+                        // TileHasWireType(wireMap[x,y], wire)
+                        // // Copy-pasting the function's code, because the compiler can optimize it much better that way.
+                       )
                     {
                         if (wireInLine[wireIndex]) continue;
                         wireInLine[wireIndex] = true;
@@ -176,21 +219,19 @@ public static class WireData
             WireChat.LogToPlayer($"Compressed horizontal wires in {(DateTime.Now - _updateTime).TotalSeconds} seconds ({yieldStepCount} yields).", Color.YellowGreen);
         _updateTime = DateTime.Now;
 
-        Dictionary<WireByte, List<(int, int)>> singlePoints = UpdateSingles(wireMap);
+        (Dictionary<WireByte, List<(int, int)>> singlePoints, List<(int, int)> teleporters) = UpdateSingles(wireMap);
 
         if (Instance.DebugWireUpdateMessages)
             WireChat.LogToPlayer($"Copied single points in {(DateTime.Now - _updateTime).TotalSeconds} seconds.", Color.YellowGreen);
         _updateTime = DateTime.Now;
 
-        return (horizontalLines, verticalLines, singlePoints);
+        return (horizontalLines, verticalLines, singlePoints, teleporters);
     }
 
     private static async Task<WireByte[,]> GetTileWires()
     {
         WireByte[,] wireMap = new WireByte[Main.tile.Width, Main.tile.Height];
-
         int yieldStepCount = 0;
-        bool hideInFog = Instance.HideWiresInFogOfWar;
 
         for (int x = 0; x < Main.tile.Width; x++)
         {
@@ -202,28 +243,35 @@ public static class WireData
 
             for (int y = 0; y < Main.tile.Height; y++)
             {
-                bool hidden = hideInFog && !Main.Map.IsRevealed(x, y);
-
                 Tile tile = Main.tile[x, y];
-                if (tile.RedWire && !hidden)
+
+                if (!Main.Map.IsRevealed(x, y))
+                {
+                    if (Instance.HideWiresInFogOfWar) continue;
+                    if (Instance.FadeWiresInFogOfWar)
+                        wireMap[x, y] |= WireByte.WireHidden;
+                }
+                if (tile.RedWire)
                     wireMap[x, y] |= WireByte.RedWire;
-                else
-                    wireMap[x, y] &= ~WireByte.RedWire;
 
-                if (tile.BlueWire && !hidden)
+                if (tile.BlueWire)
                     wireMap[x, y] |= WireByte.BlueWire;
-                else
-                    wireMap[x, y] &= ~WireByte.BlueWire;
 
-                if (tile.GreenWire && !hidden)
+                if (tile.GreenWire)
                     wireMap[x, y] |= WireByte.GreenWire;
-                else
-                    wireMap[x, y] &= ~WireByte.GreenWire;
 
-                if (tile.YellowWire && !hidden)
+                if (tile.YellowWire)
                     wireMap[x, y] |= WireByte.YellowWire;
-                else
-                    wireMap[x, y] &= ~WireByte.YellowWire;
+
+                if (tile.TileType == TileID.Teleporter)
+                {
+                    // Teleporters are 3 wide. The leftmost tile has TileFrameX = 0. The middle = 18, the right = 36.
+                    // We only want to track the middle one.
+                    if (tile.TileFrameX == 18)
+                        wireMap[x, y] |= WireByte.Teleporter;
+                    // WireChat.LogToPlayer($"Teleporter at {x},{y}, frameX={tile.TileFrameX}, frameY={tile.TileFrameY}, " +
+                    //                      $"frameN={tile.TileFrameNumber}, tileType={tile.TileType}, blockType{tile.BlockType}", Color.Blue);
+                }
             }
         }
 
@@ -234,7 +282,7 @@ public static class WireData
         return wireMap;
     }
 
-    public static async void UpdateWireMap()
+    public static async void UpdateWireMap(string source)
     {
         if (!Instance.WiresOnMapEnabled)
         {
@@ -244,6 +292,9 @@ public static class WireData
             return;
         }
 
+        if (Instance.DebugWireUpdateMessages)
+            WireChat.LogToPlayer($"Attempting wire map update from: {source}", Color.Yellow);
+
         if (_updateBusy) return;
         _updateBusy = true;
 
@@ -251,8 +302,21 @@ public static class WireData
         if (Instance.DebugWireUpdateMessages)
             WireChat.LogToPlayer($"Updating wires on {Main.tile.Height * Main.tile.Width} tiles...", Color.YellowGreen);
 
-        WireByte[,] wireMap = await GetTileWires();
-        (HorizontalLines, VerticalLines, SinglePoints) = await CompressWireMap(wireMap);
+        try
+        {
+            WireByte[,] wireMap = await GetTileWires();
+            (HorizontalLines, VerticalLines, SinglePoints, Teleporters) = await CompressWireMap(wireMap);
+        }
+        catch (Exception ex)
+        {
+            WireChat.Logger.Warn("Error trying to load or compress wire map data: " + ex.Message + "\n" + ex.StackTrace);
+            Initialized = false;
+            _updateBusy = false;
+            return;
+        }
+
+        if (Instance.DebugWireUpdateMessages)
+            WireChat.LogToPlayer($"Finished wire map update from: {source}", Color.Yellow);
 
         Initialized = true;
         _updateBusy = false;

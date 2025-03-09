@@ -7,6 +7,7 @@ Configs: {
 		Headers: {
 			MainConfiguration: Main Configuration
 			MapWireColors: Map Wire Colors
+			Debug: Debug Header
 		}
 
 		WiresOnMapEnabled: {
@@ -14,14 +15,19 @@ Configs: {
 			Tooltip: Whether the mod should draw wires on the map.
 		}
 
-		DebugMapDrawMessages: {
-			Label: Debug Map Draw Messages
-			Tooltip: Whether to send a message in chat when the map (ui) is drawn.
+		WireThickness: {
+			Label: Wire Thickness
+			Tooltip: Change how big wires are drawn on the map. Useful if you want to get a better zoomed-out overview.
 		}
 
-		DebugWireUpdateMessages: {
-			Label: Debug Wire Update Messages
-			Tooltip: Whether to send a message in chat when all wires in the world are re-indexed.
+		FadeWiresInFogOfWar: {
+			Label: Fade Wires In Fog Of War
+			Tooltip: Whether to change the opacity of wires in undiscovered tiles.
+		}
+
+		OpacityMultiplier: {
+			Label: Opacity Multiplier
+			Tooltip: The factor by which to multiply wires if they are in undiscovered tiles.
 		}
 
 		HideWiresInFogOfWar: {
@@ -48,5 +54,49 @@ Configs: {
 			Label: Yellow Wire Color
 			Tooltip: The color of Yellow wires on the map.
 		}
+
+		DebugMapDrawMessages: {
+			Label: Debug Map Draw Messages
+			Tooltip: Whether to send a message in chat when the map (ui) is drawn.
+		}
+
+		DebugWireUpdateMessages: {
+			Label: Debug Wire Update Messages
+			Tooltip: Whether to send a message in chat when all wires in the world are re-indexed.
+		}
+
+		RedWireColorMenu: {
+			Label: Red Wire Color Menu
+			Tooltip: ""
+		}
+
+		BlueWireColorMenu: {
+			Label: Blue Wire Color Menu
+			Tooltip: ""
+		}
+
+		GreenWireColorMenu: {
+			Label: Green Wire Color Menu
+			Tooltip: ""
+		}
+
+		YellowWireColorMenu: {
+			Label: Yellow Wire Color Menu
+			Tooltip: ""
+		}
+
+		DrawTeleporters: {
+			Label: Draw Teleporters
+			Tooltip: ""
+		}
+	}
+
+	WireColor: {
+		color: {
+			Label: color
+			Tooltip: ""
+		}
+
+		Tooltip: ""
 	}
 }

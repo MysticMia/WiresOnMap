@@ -7,6 +7,7 @@ using Terraria;
 using Terraria.DataStructures;
 using Terraria.GameContent;
 using Terraria.GameContent.UI;
+using Terraria.ID;
 using Terraria.Map;
 using Terraria.ModLoader;
 using Terraria.UI;
@@ -20,12 +21,17 @@ public class WireMapLayer : ModMapLayer
 {
     private static Color GetWireColor(WireByte wire)
     {
+        wire &= WireData.WireBits | WireByte.WireHidden; // Only select color-determining bits
         return wire switch
         {
-            WireByte.RedWire => Instance.RedWireColor, //Color.Red,
-            WireByte.BlueWire => Instance.BlueWireColor, //Color.Blue,
-            WireByte.GreenWire => Instance.GreenWireColor, //Color.Green,
-            WireByte.YellowWire => Instance.YellowWireColor, //Color.Yellow,
+            WireByte.RedWire => Instance.RedWireColor,
+            WireByte.BlueWire => Instance.BlueWireColor,
+            WireByte.GreenWire => Instance.GreenWireColor,
+            WireByte.YellowWire => Instance.YellowWireColor,
+            WireByte.RedWire | WireByte.WireHidden => Color.Multiply(Instance.RedWireColor, Instance.OpacityMultiplier),
+            WireByte.BlueWire | WireByte.WireHidden => Color.Multiply(Instance.BlueWireColor, Instance.OpacityMultiplier),
+            WireByte.GreenWire | WireByte.WireHidden => Color.Multiply(Instance.GreenWireColor, Instance.OpacityMultiplier),
+            WireByte.YellowWire | WireByte.WireHidden => Color.Multiply(Instance.YellowWireColor, Instance.OpacityMultiplier),
             _ => Color.White
         };
     }
@@ -66,6 +72,9 @@ public class WireMapLayer : ModMapLayer
         float _drawScale = (float)context.GetType().GetField("_drawScale", BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance).GetValue(context);
         Rectangle? _clippingRect = (Rectangle?)context.GetType().GetField("_clippingRect", BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance).GetValue(context);
 
+        position += new Vector2((1 - Instance.WireThickness) / 2); // at d=1.5, move 0.25 to left. At d=0.5, move 0.25 right.
+        scale += new Vector2(Instance.WireThickness - 1); // at d=1, keep same size. At d=0.5, shrink 0.5. At d=1.5, add 0.5.
+
         position = (position - _mapPosition) * _mapScale + _mapOffset;
         scale *= _mapScale;
 
@@ -90,18 +99,20 @@ public class WireMapLayer : ModMapLayer
 
     private static bool IsWireEnabled(WireByte wire)
     {
+        wire &= WireData.WireBits; // only get the color bits
         return wire switch
         {
             // builderAccStatus[x] returns a WireVisibilityBuilderToggle which is a VanillaBuilderToggle.
             // In VanillaBuilderToggle.DisplayValue(), VanillaBuilderToggle.CurrentState == 0 returns "GameUI.Bright".
             // We want to show the wires only if they are shown as `Bright`
             WireByte.RedWire => Main.LocalPlayer.builderAccStatus[Player.BuilderAccToggleIDs.WireVisibility_Red] == 0,
-            WireByte.BlueWire => Main.LocalPlayer.builderAccStatus[5] == 0, // blue and green are swapped lmao
-            WireByte.GreenWire => Main.LocalPlayer.builderAccStatus[6] == 0,
+            WireByte.BlueWire => Main.LocalPlayer.builderAccStatus[5] == 0,  // blue and green are swapped lmao
+            WireByte.GreenWire => Main.LocalPlayer.builderAccStatus[6] == 0, // blue and green are swapped lmao
             WireByte.YellowWire => Main.LocalPlayer.builderAccStatus[Player.BuilderAccToggleIDs.WireVisibility_Yellow] == 0,
             _ => false
         };
     }
+
 
     public override void Draw(ref MapOverlayDrawContext context, ref string text)
     {
@@ -130,6 +141,17 @@ public class WireMapLayer : ModMapLayer
             {
                 CustomDraw(context, new Vector2(point.Item1, point.Item2), new Vector2(1, 1), color, Alignment.TopLeft);
             }
+        }
+
+        if (!Instance.DrawTeleporters) return;
+
+        Texture2D teleporterTexture = Mod.Assets.Request<Texture2D>("Content/Icons/Teleporter").Value;
+
+        foreach ((int, int) point in WireData.Teleporters)
+        {
+            Vector2 pos = new Vector2(point.Item1 + 0.5f, point.Item2 + 0.5f); // add 0.5 to center it on its map tile.
+            context.Draw(teleporterTexture, pos, Color.White,
+                new SpriteFrame(1, 1, 0, 0), 1f, 1f, Alignment.Center);
         }
     }
 }
