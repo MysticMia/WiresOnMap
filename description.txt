@@ -1,1 +1,17 @@
-Modify this file with a description of your mod.
+Show your favorite wires on your minimap and world map!
+
+This mod lets you render the red, blue, green, and yellow wires on maps. To use this mod, simply load a world and place a few wires. The map updates whenever you break or place wires.
+
+The visibility of wires depends on your wire viewing settings in your inventory:
+- Set "Mechanical Display" to "Forced" (not "Normal")
+- Set the wires you want to view to "Bright" (not "Faded" or "Classic")
+
+
+Config options:
+- Toggle the mod with "Wires On Map Enabled". This can be useful if you want to disable the mod and wire rendering without leaving the game.
+- Show teleporters.
+- Change the of the wires that are drawn on the map.
+- Show wires in undiscovered areas by disabling "Hide Wires In Fog Of War".
+- ^ You can choose to make unmapped areas render a faded version of the wire by enabling "Fade Wires In Fog Of War" to multiply their opacity by "Opacity Multiplier".
+- Change the color of each wire.
+- Debugging messages, whenever the map is updated or drawn (the second one may be spammy, as it draws the map layer each game tick).
