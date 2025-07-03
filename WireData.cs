@@ -13,8 +13,8 @@ namespace WiresOnMap;
 
 public static class WireData
 {
-    public static Dictionary<WireByte, List<((int, int),int)>> HorizontalLines;
-    public static Dictionary<WireByte, List<((int, int),int)>> VerticalLines;
+    public static Dictionary<WireByte, List<((int, int), int)>> HorizontalLines;
+    public static Dictionary<WireByte, List<((int, int), int)>> VerticalLines;
     public static Dictionary<WireByte, List<(int, int)>> SinglePoints;
     public static List<(int, int)> Teleporters;
     public static bool Initialized;
@@ -244,7 +244,6 @@ public static class WireData
             for (int y = 0; y < Main.tile.Height; y++)
             {
                 Tile tile = Main.tile[x, y];
-
                 if (!Main.Map.IsRevealed(x, y))
                 {
                     if (Instance.HideWiresInFogOfWar) continue;
@@ -302,14 +301,26 @@ public static class WireData
         if (Instance.DebugWireUpdateMessages)
             WireChat.LogToPlayer($"Updating wires on {Main.tile.Height * Main.tile.Width} tiles...", Color.YellowGreen);
 
+        WireByte[,] wireMap;
         try
         {
-            WireByte[,] wireMap = await GetTileWires();
+            wireMap = await GetTileWires();
+        }
+        catch (Exception ex)
+        {
+            WireChat.Logger.Warn("Error trying to load wire map data: " + ex.Message + "\n" + ex.StackTrace);
+            Initialized = false;
+            _updateBusy = false;
+            return;
+        }
+
+        try
+        {
             (HorizontalLines, VerticalLines, SinglePoints, Teleporters) = await CompressWireMap(wireMap);
         }
         catch (Exception ex)
         {
-            WireChat.Logger.Warn("Error trying to load or compress wire map data: " + ex.Message + "\n" + ex.StackTrace);
+            WireChat.Logger.Warn("Error trying to compress wire map data: " + ex.Message + "\n" + ex.StackTrace);
             Initialized = false;
             _updateBusy = false;
             return;
