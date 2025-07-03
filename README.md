@@ -24,6 +24,10 @@ Config options:
 #### Other configurations
 - Click the wire visibility buttons in your inventory (Forced/Faded/Classic). "Forced" will make the wire show on the map.
 
+### Known issues
+- In multiplayer, the client only receives tiles 300x300 around the player. As a result, the player can't render wires for the entire map. Proposal: Add server-side mod that sends/syncs to client. For now: manually explore the map, and it will cache the data automatically (until you leave the world).
+
+
 ### Future ideas
 - Show logic gates and timers?
 - Toggle world map or mini map visibility.

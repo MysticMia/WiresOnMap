@@ -6,7 +6,6 @@ The visibility of wires depends on your wire viewing settings in your inventory:
 - Set "Mechanical Display" to "Forced" (not "Normal")
 - Set the wires you want to view to "Bright" (not "Faded" or "Classic")
 
-
 Config options:
 - Toggle the mod with "Wires On Map Enabled". This can be useful if you want to disable the mod and wire rendering without leaving the game.
 - Show teleporters.
@@ -15,3 +14,7 @@ Config options:
 - ^ You can choose to make unmapped areas render a faded version of the wire by enabling "Fade Wires In Fog Of War" to multiply their opacity by "Opacity Multiplier".
 - Change the color of each wire.
 - Debugging messages, whenever the map is updated or drawn (the second one may be spammy, as it draws the map layer each game tick).
+
+
+Known issues:
+- In multiplayer, the client only receives tiles 300x300 around the player. As a result, the player can't render wires for the entire map. Proposal: Add server-side mod that sends/syncs to client. For now: manually explore the map, and it will cache the data automatically (until you leave the world).
